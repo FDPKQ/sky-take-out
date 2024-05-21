@@ -6,3 +6,8 @@ sky:
     database: sky_take_out
     username: luo
     password: I_4f2_FWPY_tQYb7
+
+  minio:
+    endpoint: https://minio.lan.luoxianjun.com
+    accessKey: wLr3WyH7QRkYbmVs83HH
+    secretKey: hgAwbBTGD2wcLmDCklVPIibK1qSg2F4V81pCiq11
