@@ -11,3 +11,10 @@ sky:
     endpoint: https://minio.lan.luoxianjun.com
     accessKey: wLr3WyH7QRkYbmVs83HH
     secretKey: hgAwbBTGD2wcLmDCklVPIibK1qSg2F4V81pCiq11
+
+  redis:
+    host: vm2.lan.luoxianjun.com
+    port: 6379
+    password: password123456
+    database: 1
+

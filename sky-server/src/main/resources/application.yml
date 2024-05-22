@@ -15,6 +15,12 @@ spring:
   servlet:
     multipart:
       max-file-size: 100MB
+  redis:
+    host: ${sky.redis.host}
+    port: ${sky.redis.port}
+    password: ${sky.redis.password}
+    database: ${sky.redis.database}
+
 
 mybatis:
   #mapper配置文件
@@ -45,3 +51,5 @@ sky:
     endpoint: ${sky.minio.endpoint}
     accessKey: ${sky.minio.accessKey}
     secretKey: ${sky.minio.secretKey}
+
+
