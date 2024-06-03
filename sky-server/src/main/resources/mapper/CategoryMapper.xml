@@ -37,6 +37,8 @@
     <select id="getByType" resultType="com.sky.entity.Category">
         select *
         from category
-        where type = #{type}
+        <where>
+            <if test="type != null and type != ''">and type = #{type}</if>
+        </where>
     </select>
 </mapper>
