@@ -24,7 +24,7 @@ public interface SetmealService {
 
     void update(SetmealDTO setmealDTO);
 
-    List<Setmeal> list(Setmeal setmeal);
+    List<Setmeal> listById(Long categoryId);
 
     List<DishItemVO> getDishItemById(Long id);
 }

@@ -3,6 +3,7 @@ package com.sky.service.impl;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
+import com.sky.constant.RedisConstant;
 import com.sky.constant.StatusConstant;
 import com.sky.dto.SetmealDTO;
 import com.sky.dto.SetmealPageQueryDTO;
@@ -19,14 +20,16 @@ import com.sky.service.SetmealService;
 import com.sky.vo.DishItemVO;
 import com.sky.vo.SetmealVO;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.lang.annotation.Retention;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class SetmealServiceImpl implements SetmealService {
@@ -39,24 +42,41 @@ public class SetmealServiceImpl implements SetmealService {
     @Resource
     private SetmealDishMapper setmealDishMapper;
 
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
     @Override
     public void save(SetmealDTO setmealDTO) {
-
+        // TODO Delete
     }
 
+    /**
+     * 保存套餐及其菜品信息，并清除对应的缓存。
+     * 使用@Transactional注解确保该操作为一个事务，保证数据的一致性。
+     * 使用@CacheEvict注解在保存套餐信息后，清除Redis中对应的套餐缓存，以保证缓存数据的实时性。
+     *
+     * @param setmealDTO 套餐信息的数据传输对象，包含套餐的基本信息和关联的菜品信息。
+     *                   DTO用于在不同层之间传递数据。
+     */
     @Override
     @Transactional
+    @CacheEvict(cacheNames = RedisConstant.SETMEAL_CACHE_KEY, key = "#setmealDTO.categoryId")
     public void saveWithDish(SetmealDTO setmealDTO) {
+        // 创建一个新的套餐实体对象
         Setmeal setmeal = new Setmeal();
+        // 将DTO中的属性复制到套餐实体对象中，准备插入数据库
         BeanUtils.copyProperties(setmealDTO, setmeal);
-
+        // 插入套餐基本信息到数据库
         setmealMapper.insert(setmeal);
 
+        // 获取套餐关联的菜品列表
         List<SetmealDish> setmealDishes = setmealDTO.getSetmealDishes();
+        // 为每个菜品设置刚刚插入套餐的ID，建立套餐与菜品的关联关系
         setmealDishes.forEach(setmealDish -> setmealDish.setSetmealId(setmeal.getId()));
-
+        // 批量插入套餐关联的菜品信息到数据库
         setmealDishMapper.insertBatch(setmealDishes);
     }
+
 
     @Override
     public PageResult pageQuery(SetmealPageQueryDTO dto) {
@@ -68,19 +88,37 @@ public class SetmealServiceImpl implements SetmealService {
     }
 
 
+    /**
+     * 批量删除套餐信息。
+     * <p>
+     * 此方法首先检查待删除的套餐中是否有正在销售中的套餐，如果有，则抛出异常不允许删除。
+     * 然后，它将删除指定ID列表中的套餐及其相关菜式，并从Redis缓存中删除相应的套餐信息。
+     * 使用@Transactional注解确保整个操作的事务性。
+     *
+     * @param ids 套餐ID列表，用于指定要删除的套餐。
+     * @throws DeletionNotAllowedException 如果尝试删除正在销售中的套餐，则抛出此异常。
+     */
     @Override
     @Transactional
+    @CacheEvict(cacheNames = RedisConstant.SETMEAL_CACHE_KEY, allEntries = true)
     public void deleteBatch(List<Long> ids) {
+        // 根据ID列表查询套餐信息
         List<Setmeal> setmealList = setmealMapper.getByIds(ids);
+
+        // 遍历查询到的套餐，检查是否有正在销售中的套餐
         setmealList.forEach(s -> {
             if (s.getStatus().equals(StatusConstant.ENABLE)) {
+                // 如果套餐状态为正在销售中，则抛出异常不允许删除
                 throw new DeletionNotAllowedException(MessageConstant.SETMEAL_ON_SALE + ": " + s.getName());
             }
         });
 
+        // 删除套餐信息
         setmealMapper.deleteByIds(ids);
+        // 删除与套餐相关的菜式信息
         setmealDishMapper.deleteBySetmealIds(ids);
     }
+
 
     /**
      * 根据ID获取套餐信息。
@@ -120,6 +158,7 @@ public class SetmealServiceImpl implements SetmealService {
      */
     @Override
     @Transactional
+    @CacheEvict(cacheNames = RedisConstant.SETMEAL_CACHE_KEY, key = "#setmealDTO.categoryId")
     public void update(SetmealDTO setmealDTO) {
         // 创建一个新的Setmeal实例，并从DTO复制属性
         Setmeal setmeal = new Setmeal();
@@ -142,13 +181,13 @@ public class SetmealServiceImpl implements SetmealService {
         setmealDishMapper.insertBatch(setmealDishes);
     }
 
-    /**
-     * 条件查询
-     *
-     * @param setmeal
-     * @return
-     */
-    public List<Setmeal> list(Setmeal setmeal) {
+
+    @Cacheable(cacheNames = RedisConstant.SETMEAL_CACHE_KEY, key = "#categoryId")
+    public List<Setmeal> listById(Long categoryId) {
+        Setmeal setmeal = Setmeal.builder()
+                .categoryId(categoryId)
+                .status(StatusConstant.ENABLE)
+                .build();
         return setmealMapper.list(setmeal);
     }
 
@@ -175,6 +214,7 @@ public class SetmealServiceImpl implements SetmealService {
      * @param status 要更新到的新状态，不可为null。
      */
     @Override
+    @CacheEvict(cacheNames = RedisConstant.SETMEAL_CACHE_KEY, allEntries = true)
     public void updateStatus(Long id, Integer status) {
         // 当套餐状态更新为启用时，进行特别检查
         if (status.equals(StatusConstant.ENABLE)) {

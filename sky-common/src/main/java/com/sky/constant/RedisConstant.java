@@ -8,4 +8,6 @@ public class RedisConstant {
     public static final Long DISH_TTL = 30L;
     public static final TimeUnit DISH_TTL_Unit = TimeUnit.MINUTES;
 
+    public final static String SETMEAL_CACHE_KEY = "setmealCache";
+
 }
