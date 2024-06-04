@@ -46,6 +46,8 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         // 设置用户ID
         shoppingCart.setUserId(BaseContext.getCurrentId());
         // 根据购物车信息查询已存在的购物车列表
+
+        // TODO Add Lock
         List<ShoppingCart> list = shoppingCartMapper.list(shoppingCart);
 
         // 如果已存在购物车项，则数量加1并更新
