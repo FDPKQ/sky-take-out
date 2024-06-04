@@ -35,7 +35,7 @@ public class OrderController {
         log.info("生成预支付交易单：{}", orderPaymentVO);
         return Result.success(orderPaymentVO);
     }
-    
+
 
     @GetMapping("/historyOrders")
     @ApiOperation("历史订单查询")
@@ -64,4 +64,11 @@ public class OrderController {
         orderService.repetition(id);
         return Result.success();
     }
+
+    @GetMapping("/reminder/{id}")
+    public Result<String> reminder(@PathVariable Long id) {
+        orderService.reminder(id);
+        return Result.success();
+    }
+
 }
