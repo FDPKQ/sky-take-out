@@ -23,6 +23,7 @@ import com.sky.vo.OrderSubmitVO;
 import com.alibaba.fastjson.JSONObject;
 
 import com.sky.vo.OrderVO;
+import com.sky.websocket.WebSocketServer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,6 +48,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Value("${sky.baidu.ak}")
     private String ak;
+
+    @Resource
+    private WebSocketServer webSocketServer;
 
 
     public static final BigDecimal FREIGHT = BigDecimal.valueOf(6);
@@ -186,6 +190,7 @@ public class OrderServiceImpl implements OrderService {
         LocalDateTime check_out_time = LocalDateTime.now();
         orderMapper.updateStatus(OrderStatus, OrderPaidStatus, check_out_time, orderId);
 
+
         return vo;  //  修改支付方法中的代码
 
     }
@@ -205,6 +210,14 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
         orderMapper.update(orders);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("type", 1);
+        map.put("orderId", ordersDB.getId());
+        map.put("content", "订单号：" + outTradeNo);
+
+        String json = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(json);
     }
 
     @Override
