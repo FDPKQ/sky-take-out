@@ -61,4 +61,9 @@ sky:
     accessKey: ${sky.minio.accessKey}
     secretKey: ${sky.minio.secretKey}
 
+  shop:
+    address: 北京市海淀区西土城路10号
+  baidu:
+    ak: 1313654654
+
 
