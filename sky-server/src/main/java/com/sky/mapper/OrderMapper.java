@@ -44,4 +44,5 @@ public interface OrderMapper {
     @MapKey("date")
     List<Map<String, Object>> getOrderDaySumFromBeginToEnd(LocalDate begin, LocalDate end);
 
+    Integer countByMap(Map<String, Object> map);
 }
