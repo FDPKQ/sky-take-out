@@ -88,4 +88,16 @@
         </where>
         order by order_time desc
     </select>
+    <select id="getOrderDaySumFromBeginToEnd" resultType="map">
+        SELECT DATE(order_time) AS date,
+               SUM(amount)      AS daily_turnover
+        FROM orders
+        WHERE status = 5
+          AND order_time BETWEEN #{begin} AND date_add(#{end}, interval 1 day)
+
+        GROUP BY DATE(order_time)
+        ORDER BY DATE(order_time)
+    </select>
+
+
 </mapper>
