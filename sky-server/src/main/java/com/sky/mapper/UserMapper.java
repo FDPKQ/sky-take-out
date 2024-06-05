@@ -15,5 +15,5 @@ public interface UserMapper {
 
     User getById(Long userId);
 
-    Integer countByMap(Map<String, LocalDateTime> map);
+    Integer countByMap(Map<String, Object> map);
 }

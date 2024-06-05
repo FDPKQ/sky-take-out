@@ -99,7 +99,7 @@ public class ReportServiceImpl implements ReportService {
             LocalDateTime endTime = LocalDateTime.of(date, LocalTime.MAX);
 
             // 使用HashMap存储开始和结束时间，用于查询用户数
-            Map<String, LocalDateTime> map = new HashMap<>();
+            Map<String, Object> map = new HashMap<>();
             map.put("end", endTime);
 
             // 查询并获取当天的总用户数

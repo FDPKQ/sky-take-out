@@ -49,4 +49,6 @@ public interface OrderMapper {
 
 
     List<GoodsSalesDTO> getSalesTop10(LocalDateTime begin, LocalDateTime end);
+
+    Double sumByMap(Map<String, Object> map);
 }
