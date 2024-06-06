@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.sky.constant.RedisConstant;
 import com.sky.dto.GoodsSalesDTO;
 import com.sky.entity.Orders;
 import com.sky.mapper.OrderMapper;
@@ -12,6 +13,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -47,6 +49,7 @@ public class ReportServiceImpl implements ReportService {
      * 如果开始日期晚于结束日期，返回null。
      */
     @Override
+    @Cacheable(cacheNames = RedisConstant.TURNOVER_STATISTICS, key = "T(java.lang.String).format('%s:%s',#begin, #end)")
     public TurnoverReportVO getTurnoverStatistics(LocalDate begin, LocalDate end) {
         // 检查开始日期是否晚于结束日期，如果是，则直接返回null
         if (begin.isAfter(end)) {
@@ -91,6 +94,7 @@ public class ReportServiceImpl implements ReportService {
      * @return UserReportVO 对象，包含每天的日期、新增用户数和总用户数
      */
     @Override
+    @Cacheable(cacheNames = RedisConstant.USER_STATISTICS, key = "T(java.lang.String).format('%s:%s',#begin, #end)")
     public UserReportVO getUserStatistics(LocalDate begin, LocalDate end) {
         // 初始化日期列表，用于存储从开始日期到结束日期之间的每一天
         List<LocalDate> dateList = getLocalDates(begin, end);
@@ -142,6 +146,7 @@ public class ReportServiceImpl implements ReportService {
      * @return 返回包含订单统计信息的OrderReportVO对象
      */
     @Override
+    @Cacheable(cacheNames = RedisConstant.ORDER_STATISTICS, key = "T(java.lang.String).format('%s:%s',#begin, #end)")
     public OrderReportVO getOrdersStatistics(LocalDate begin, LocalDate end) {
         // 初始化日期列表，用于存储从开始日期到结束日期的所有日期
         List<LocalDate> dateList = getLocalDates(begin, end);
@@ -183,10 +188,9 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
+    @Cacheable(cacheNames = RedisConstant.TOP10_STATISTICS, key = "T(java.lang.String).format('%s:%s',#begin, #end)")
     public SalesTop10ReportVO getSalesTop10(LocalDate begin, LocalDate end) {
-
         List<GoodsSalesDTO> goodsSalesDTOList = orderMapper.getSalesTop10(LocalDateTime.of(begin, LocalTime.MIN), LocalDateTime.of(end, LocalTime.MAX));
-
         return SalesTop10ReportVO.builder()
                 .nameList(StringUtils.join(
                         goodsSalesDTOList.stream()
